@@ -19,7 +19,7 @@ defmodule Elmverse.MixProject do
   def application do
     [
       mod: {Elmverse.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :httpoison]
     ]
   end
 
@@ -40,7 +40,8 @@ defmodule Elmverse.MixProject do
       {:jason, "~> 1.1"},
       {:plug_cowboy, "~> 2.0"},
       {:sqlitex, "~> 1.5"},
-      {:httpoison, "~> 1.5"}
+      {:httpoison, "~> 1.5"},
+      {:exsync, "~> 0.2.3", only: :dev}
     ]
   end
 end
