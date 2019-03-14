@@ -1,3 +1,5 @@
+-- minimal SQLite version 3.24
+
 CREATE TABLE IF NOT EXISTS package_repository (
     repo_id INTEGER PRIMARY KEY
 ,   repo_url TEXT NOT NULL
@@ -7,35 +9,20 @@ CREATE TABLE IF NOT EXISTS package_repository (
 
 
 CREATE TABLE IF NOT EXISTS package (
-    pub_name TEXT PRIMARY KEY
+    pub_name TEXT NOT NULL
 ,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   publisher TEXT
 ,   pkg_name TEXT
 ,   license TEXT
 ,   summary TEXT
+,   PRIMARY KEY (pub_name, repo_id)
 );
-
-CREATE TRIGGER IF NOT EXISTS package_insert
-AFTER INSERT ON package FOR EACH ROW
-BEGIN
-    UPDATE package SET
-        publisher = substr(NEW.pub_name, 0, instr(NEW.pub_name, "/")),
-        pkg_name = substr(NEW.pub_name, instr(NEW.pub_name, "/") + 1)
-    WHERE pub_name = NEW.pub_name;
-END;
-
-CREATE TRIGGER IF NOT EXISTS package_update
-AFTER UPDATE ON package FOR EACH ROW
-BEGIN
-    UPDATE package SET
-        publisher = substr(NEW.pub_name, 0, instr(NEW.pub_name, "/")),
-        pkg_name = substr(NEW.pub_name, instr(NEW.pub_name, "/") + 1)
-    WHERE pub_name = NEW.pub_name;
-END;
 
 
 CREATE TABLE IF NOT EXISTS package_release (
-    pkg_ver TEXT PRIMARY KEY
-,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
+    pub_name TEXT NOT NULL
+,   pkg_ver TEXT NOT NULL
 ,   released INTEGER
+,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
+,   PRIMARY KEY (pub_name, pkg_ver)
 );
