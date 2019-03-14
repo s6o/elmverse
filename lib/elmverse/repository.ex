@@ -46,12 +46,25 @@ defmodule Elmverse.Repository do
       try do
         {:ok,
          pkg_list
-         |> Enum.map(fn pkg_map -> Package.from_map!(repo.repo_id, pkg_map) end)}
+         |> Enum.map(fn pkg_map -> pkg_map |> to_package!(repo.repo_id) end)}
       catch
         e ->
           {:error, Kernel.inspect(e)}
       end
     end
+  end
+
+  defp to_package!(%{"license" => license, "name" => pub_name, "summary" => summary}, repo_id) do
+    [publisher | [pkg_name | _]] = String.split(pub_name, "/")
+
+    %Package{
+      pub_name: pub_name,
+      repo_id: repo_id,
+      publisher: publisher,
+      pkg_name: pkg_name,
+      license: license,
+      summary: summary
+    }
   end
 
   @spec update_timestamp(Repository.t()) :: {:ok, Repository.t()} | [{:error, atom()}]

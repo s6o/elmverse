@@ -20,18 +20,7 @@ defmodule Elmverse.Package do
   alias __MODULE__
   alias Sqlitex.Server, as: Db
 
-  @spec from_map!(pos_integer(), map()) :: Package.t()
-  def from_map!(repo_id, %{"license" => license, "name" => pub_name, "summary" => summary}) do
-    [publisher | [pkg_name | _]] = String.split(pub_name, "/")
 
-    %Package{
-      pub_name: pub_name,
-      repo_id: repo_id,
-      publisher: publisher,
-      pkg_name: pkg_name,
-      license: license,
-      summary: summary
-    }
   end
 
   @spec save(Package.t()) :: {:ok, Package.t()} | [{:error, atom()}]
