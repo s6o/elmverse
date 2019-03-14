@@ -19,8 +19,23 @@ defmodule Elmverse.Package do
 
   alias __MODULE__
   alias Sqlitex.Server, as: Db
+  alias Elmverse.Release
 
+  @spec fetch_releases(Package.t(), String.t()) ::
+          {:ok, [Release.t()]}
+          | {:error, HTTPoison.Error.t()}
+          | {:error, Jason.DecodeError.t()}
+  def fetch_releases(%Package{} = pkg, meta_url) do
+    req_url = meta_url <> "/" <> pkg.pub_name <> "/releases.json"
 
+    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(req_url),
+         {:ok, rel_list} <- Jason.decode(body) do
+      {:ok,
+       rel_list
+       |> Enum.map(fn {ver, epoch} ->
+         %Release{pub_name: pkg.pub_name, pkg_ver: ver, released: epoch, repo_id: pkg.repo_id}
+       end)}
+    end
   end
 
   @spec save(Package.t()) :: {:ok, Package.t()} | [{:error, atom()}]
