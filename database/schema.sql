@@ -21,9 +21,18 @@ CREATE TABLE IF NOT EXISTS package (
 
 
 CREATE TABLE IF NOT EXISTS package_release (
-    pub_name TEXT NOT NULL
+    pub_name TEXT NOT NULL REFERENCES package(pub_name) ON DELETE CASCADE ON UPDATE CASCADE
 ,   pkg_ver TEXT NOT NULL
 ,   released INTEGER
 ,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   PRIMARY KEY (pub_name, pkg_ver)
 );
+
+
+CREATE TABLE IF NOT EXISTS release_readme (
+    pub_name TEXT NOT NULL REFERENCES package(pub_name) ON DELETE CASCADE ON UPDATE CASCADE
+,   pkg_ver TEXT NOT NULL
+,   readme TEXT
+,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
+,   PRIMARY KEY (pub_name, pkg_ver)
+)
