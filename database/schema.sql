@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS package_repository (
     repo_id INTEGER PRIMARY KEY
 ,   repo_url TEXT NOT NULL
+,   meta_url TEXT NOT NULL
 ,   elm_ver TEXT NOT NULL
 ,   last_update TEXT
 );

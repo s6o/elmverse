@@ -2,6 +2,7 @@ defmodule Elmverse.Repository do
   @type t :: %__MODULE__{
           repo_id: pos_integer(),
           repo_url: String.t(),
+          meta_url: String.t(),
           elm_ver: String.t(),
           last_update: DateTime.t() | nil
         }
@@ -9,6 +10,7 @@ defmodule Elmverse.Repository do
   defstruct [
     :repo_id,
     :repo_url,
+    :meta_url,
     :elm_ver,
     :last_update
   ]
