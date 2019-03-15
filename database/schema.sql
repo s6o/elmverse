@@ -1,6 +1,6 @@
 -- minimal SQLite version 3.24
 
-CREATE TABLE IF NOT EXISTS package_repository (
+CREATE TABLE IF NOT EXISTS repository (
     repo_id INTEGER PRIMARY KEY
 ,   repo_url TEXT NOT NULL
 ,   meta_url TEXT NOT NULL

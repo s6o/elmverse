@@ -21,7 +21,7 @@ defmodule Elmverse.Repository do
 
   @spec list() :: {:ok, [Repository.t()]} | [{:error, atom()}]
   def list() do
-    query = "SELECT * FROM package_repository ORDER BY elm_ver DESC"
+    query = "SELECT * FROM repository ORDER BY elm_ver DESC"
 
     with {:ok, results} <- Db.query(:elmverse, query) do
       {:ok,
@@ -58,8 +58,8 @@ defmodule Elmverse.Repository do
     [publisher | [pkg_name | _]] = String.split(pub_name, "/")
 
     %Package{
-      pub_name: pub_name,
       repo_id: repo_id,
+      pub_name: pub_name,
       publisher: publisher,
       pkg_name: pkg_name,
       license: license,
@@ -69,7 +69,7 @@ defmodule Elmverse.Repository do
 
   @spec update_timestamp(Repository.t()) :: {:ok, Repository.t()} | [{:error, atom()}]
   def update_timestamp(%Repository{} = repo) do
-    query = "UPDATE package_repository SET last_update = $1 WHERE repo_id = $2"
+    query = "UPDATE repository SET last_update = $1 WHERE repo_id = $2"
     ts = DateTime.utc_now() |> DateTime.to_iso8601()
 
     with {:ok, _} <- Db.query(:elmverse, query, bind: [ts, repo.repo_id]) do
