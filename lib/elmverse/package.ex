@@ -1,7 +1,8 @@
 defmodule Elmverse.Package do
   @type t :: %__MODULE__{
-          pub_name: String.t(),
+          pkg_id: pos_integer(),
           repo_id: pos_integer(),
+          pub_name: String.t(),
           publisher: String.t(),
           pkg_name: String.t(),
           license: String.t(),
@@ -9,8 +10,9 @@ defmodule Elmverse.Package do
         }
 
   defstruct [
-    :pub_name,
+    :pkg_id,
     :repo_id,
+    :pub_name,
     :publisher,
     :pkg_name,
     :license,
@@ -38,27 +40,27 @@ defmodule Elmverse.Package do
     end
   end
 
-  @spec save(Package.t()) :: {:ok, Package.t()} | [{:error, atom()}]
-  def save(%Package{} = pkg) do
+  @spec save(Package.t(), atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
+  def save(%Package{} = pkg, db \\ :elmverse) do
     query = """
-      INSERT INTO package (pub_name, repo_id, publisher, pkg_name, license, summary)
+      INSERT INTO package (repo_id, pub_name, publisher, pkg_name, license, summary)
         VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (pub_name, repo_id) DO UPDATE SET
-          license = $5, summary = $6
     """
 
     with {:ok, _} <-
-           Db.query(:elmverse, query,
+           Db.query(db, query,
              bind: [
-               pkg.pub_name,
                pkg.repo_id,
+               pkg.pub_name,
                pkg.publisher,
                pkg.pkg_name,
                pkg.license,
                pkg.summary
              ]
-           ) do
-      {:ok, pkg}
+           ),
+         {:ok, [%{:pkg_id => pkg_id}]} <-
+           Db.query(db, "SELECT last_insert_rowid() as pkg_id", into: %{}) do
+      {:ok, Map.put(pkg, :pkg_id, pkg_id)}
     end
   end
 end
