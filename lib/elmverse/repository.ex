@@ -19,20 +19,32 @@ defmodule Elmverse.Repository do
   alias Sqlitex.Server, as: Db
   alias Elmverse.Package
 
+  defimpl Collectable, for: Elmverse.Repository do
+    def into(original) do
+      collector_fn = fn s, cmd ->
+        case cmd do
+          {:cont, {key, value}} ->
+            Map.put(s, key, value)
+
+          :done ->
+            s
+
+          :halt ->
+            :ok
+        end
+      end
+
+      {original, collector_fn}
+    end
+  end
+
   @spec list(atom() | pid()) :: {:ok, [Repository.t()]} | [{:error, atom()}]
   def list(db \\ :elmverse) do
     query = "SELECT * FROM repository ORDER BY elm_ver DESC"
 
-    with {:ok, results} <- Db.query(db, query) do
-      {:ok,
-       results
-       |> Enum.map(&to_repository/1)}
+    with {:ok, results} <- Db.query(db, query, into: %Repository{}) do
+      {:ok, results}
     end
-  end
-
-  defp to_repository(kv_list) do
-    kv_list
-    |> Enum.reduce(%Repository{}, fn {k, v}, r -> Map.put(r, k, v) end)
   end
 
   @spec fetch_packages(Elmverse.Repository.t()) ::
@@ -54,8 +66,9 @@ defmodule Elmverse.Repository do
     end
   end
 
-  defp to_package!(%{"license" => license, "name" => pub_name, "summary" => summary}, repo_id) do
+  defp to_package!(%{"name" => pub_name, "summary" => summary} = item, repo_id) do
     [publisher | [pkg_name | _]] = String.split(pub_name, "/")
+    license = Map.get(item, "license", nil)
 
     %Package{
       repo_id: repo_id,
@@ -65,6 +78,15 @@ defmodule Elmverse.Repository do
       license: license,
       summary: summary
     }
+  end
+
+  @spec packages(Repository.t(), atom() | pid()) :: {:ok, [Package.t()]} | {:error, any()}
+  def packages(%Repository{} = r, db \\ :elmverse) do
+    query = "SELECT * FROM package WHERE repo_id = $1 ORDER BY pub_name"
+
+    with {:ok, results} <- Db.query(db, query, into: %Package{}, bind: [r.repo_id]) do
+      {:ok, results}
+    end
   end
 
   @spec update_timestamp(Repository.t(), atom() | pid()) ::
