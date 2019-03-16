@@ -1,8 +1,9 @@
 defmodule Elmverse.Release.Doc do
   @type t :: %__MODULE__{
+          repo_id: pos_integer(),
+          rel_id: pos_integer(),
           pub_name: String.t(),
           pkg_ver: String.t(),
-          repo_id: pos_integer(),
           item_path: String.t(),
           item_index: non_neg_integer(),
           item_name: String.t(),
@@ -13,9 +14,10 @@ defmodule Elmverse.Release.Doc do
         }
 
   defstruct [
+    :repo_id,
+    :rel_id,
     :pub_name,
     :pkg_ver,
-    :repo_id,
     :item_path,
     :item_index,
     :item_name,

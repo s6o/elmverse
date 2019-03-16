@@ -1,37 +1,38 @@
 defmodule Elmverse.Release.Readme do
   @type t :: %__MODULE__{
+          repo_id: pos_integer(),
+          rel_id: pos_integer(),
           pub_name: String.t(),
           pkg_ver: String.t(),
-          readme: String.t(),
-          repo_id: pos_integer()
+          readme: String.t()
         }
 
   defstruct [
+    :repo_id,
+    :rel_id,
     :pub_name,
     :pkg_ver,
-    :readme,
-    :repo_id
+    :readme
   ]
 
   alias __MODULE__
   alias Sqlitex.Server, as: Db
 
-  @spec save(Readme.t()) :: {:ok, Readme.t()} | [{:error, atom()}]
-  def save(%Readme{} = r) do
+  @spec save(Readme.t(), atom() | pid()) :: {:ok, Readme.t()} | [{:error, atom()}]
+  def save(%Readme{} = r, db \\ :elmverse) do
     query = """
-      INSERT INTO release_readme (pub_name, pkg_ver, readme, repo_id)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (pub_name, pkg_ver) DO UPDATE SET
-          readme = $3, repo_id = $4
+      INSERT INTO release_readme (repo_id, rel_id, pub_name, pkg_ver, readme)
+        VALUES ($1, $2, $3, $4, $5)
     """
 
     with {:ok, _} <-
-           Db.query(:elmverse, query,
+           Db.query(db, query,
              bind: [
+               r.repo_id,
+               r.rel_id,
                r.pub_name,
                r.pkg_ver,
-               r.readme,
-               r.repo_id
+               r.readme
              ]
            ) do
       {:ok, r}

@@ -48,9 +48,10 @@ defmodule Elmverse.Release do
        ) do
     %{
       "/#{module_name}" => %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: "/#{module_name}",
         item_name: module_name,
         item_comment: module_comment
@@ -71,9 +72,10 @@ defmodule Elmverse.Release do
       key = "/#{module_name}/aliases/#{name}"
 
       doc = %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: key,
         item_name: name,
         item_comment: c,
@@ -98,9 +100,10 @@ defmodule Elmverse.Release do
       key = "/#{module_name}/binops/#{name}"
 
       doc = %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: key,
         item_name: name,
         item_comment: c,
@@ -128,9 +131,10 @@ defmodule Elmverse.Release do
           k = "/#{module_name}/unions/#{name}/cases/#{cs}"
 
           d = %Doc{
+            repo_id: r.repo_id,
+            rel_id: r.rel_id,
             pub_name: r.pub_name,
             pkg_ver: r.pkg_ver,
-            repo_id: r.repo_id,
             item_path: k,
             item_name: cs
           }
@@ -142,9 +146,10 @@ defmodule Elmverse.Release do
       key = "/#{module_name}/unions/#{name}"
 
       doc = %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: key,
         item_name: name,
         item_comment: c
@@ -162,9 +167,10 @@ defmodule Elmverse.Release do
       key = "/#{module_name}/values/#{name}"
 
       doc = %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: key,
         item_name: name,
         item_comment: c,
@@ -181,9 +187,10 @@ defmodule Elmverse.Release do
       k = "#{parent_path}/args/#{arg}"
 
       d = %Doc{
+        repo_id: r.repo_id,
+        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
-        repo_id: r.repo_id,
         item_path: k,
         item_name: arg
       }
@@ -199,7 +206,14 @@ defmodule Elmverse.Release do
     req_url = meta_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/README.md"
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: readme}} <- HTTPoison.get(req_url) do
-      {:ok, %Readme{pub_name: r.pub_name, pkg_ver: r.pkg_ver, readme: readme, repo_id: r.repo_id}}
+      {:ok,
+       %Readme{
+         repo_id: r.repo_id,
+         rel_id: r.rel_id,
+         pub_name: r.pub_name,
+         pkg_ver: r.pkg_ver,
+         readme: readme
+       }}
     end
   end
 
