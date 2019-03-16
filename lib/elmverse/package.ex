@@ -35,7 +35,13 @@ defmodule Elmverse.Package do
       {:ok,
        rel_list
        |> Enum.map(fn {ver, epoch} ->
-         %Release{pub_name: pkg.pub_name, pkg_ver: ver, released: epoch, repo_id: pkg.repo_id}
+         %Release{
+           repo_id: pkg.repo_id,
+           pkg_id: pkg.pkg_id,
+           pub_name: pkg.pub_name,
+           pkg_ver: ver,
+           released: epoch
+         }
        end)}
     end
   end

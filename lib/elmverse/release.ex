@@ -1,16 +1,20 @@
 defmodule Elmverse.Release do
   @type t :: %__MODULE__{
+          rel_id: pos_integer(),
+          repo_id: pos_integer(),
+          pkg_id: pos_integer(),
           pub_name: String.t(),
           pkg_ver: String.t(),
-          released: pos_integer(),
-          repo_id: pos_integer()
+          released: pos_integer()
         }
 
   defstruct [
+    :rel_id,
+    :repo_id,
+    :pkg_id,
     :pub_name,
     :pkg_ver,
-    :released,
-    :repo_id
+    :released
   ]
 
   alias __MODULE__
@@ -199,25 +203,26 @@ defmodule Elmverse.Release do
     end
   end
 
-  @spec save(Release.t()) :: {:ok, Release.t()} | [{:error, atom()}]
-  def save(%Release{} = r) do
+  @spec save(Release.t(), atom() | pid()) :: {:ok, Release.t()} | [{:error, atom()}]
+  def save(%Release{} = r, db \\ :elmverse) do
     query = """
-      INSERT INTO package_release (pub_name, pkg_ver, released, repo_id)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (pub_name, pkg_ver) DO UPDATE SET
-          released = $3, repo_id = $4
+      INSERT INTO package_release (repo_id, pkg_id, pub_name, pkg_ver, released)
+        VALUES ($1, $2, $3, $4, $5)
     """
 
     with {:ok, _} <-
-           Db.query(:elmverse, query,
+           Db.query(db, query,
              bind: [
+               r.repo_id,
+               r.pkg_id,
                r.pub_name,
                r.pkg_ver,
-               r.released,
-               r.repo_id
+               r.released
              ]
-           ) do
-      {:ok, r}
+           ),
+         {:ok, [%{:rel_id => rel_id}]} <-
+           Db.query(db, "SELECT last_insert_rowid() as rel_id", into: %{}) do
+      {:ok, Map.put(r, :rel_id, rel_id)}
     end
   end
 end
