@@ -1,19 +1,47 @@
 defmodule Elmverse.PackageTest do
   use ExUnit.Case
+  use Elmverse.DbSetupCase
 
+  alias Elmverse.Repository
   alias Elmverse.Package
 
-  setup do
-    {:ok, pid} = Sqlitex.Server.start_link(":memory:")
+  test "Elmverse.Package.fetch_releases/2", %{db: pid} = _context do
+    with {:ok, repos} <- Repository.list(pid) do
+      repos
+      |> Enum.filter(fn r -> r.elm_ver == "0.19" end)
+      |> (fn [r | _] ->
+            assert r.repo_id == 2
+            assert r.last_update == nil
 
-    Sqlitex.Server.exec(pid, File.read!("./database/schema.sql"))
-    Sqlitex.Server.exec(pid, File.read!("./database/initial_data.sql"))
+            with {:ok, packages} <- Repository.fetch_packages(r) do
+              packages
+              |> Enum.filter(fn p -> p.pub_name == "elm/browser" end)
+              |> (fn [pkg | _] ->
+                    assert pkg.repo_id == 2
+                    assert pkg.publisher == "elm"
+                    assert pkg.pkg_name == "browser"
 
-    on_exit(fn ->
-      Sqlitex.Server.stop(pid)
-    end)
-
-    {:ok, db: pid}
+                    with {:ok, [rel | _releases]} <- Package.fetch_releases(pkg, r.meta_url) do
+                      assert rel.pub_name == "elm/browser"
+                      assert rel.pkg_ver == "1.0.0"
+                      assert rel.released == 1_534_772_907
+                      assert rel.repo_id == 2
+                    else
+                      error ->
+                        IO.inspect(error, label: "Release fetch.")
+                    end
+                  end).()
+            else
+              error ->
+                IO.inspect(error, label: "Package fetch.")
+                assert false
+            end
+          end).()
+    else
+      error ->
+        IO.inspect(error, label: "Repository fetch.")
+        assert false
+    end
   end
 
   test "Elmverse.Package.save/1", %{db: pid} = _context do
