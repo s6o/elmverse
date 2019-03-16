@@ -19,11 +19,11 @@ defmodule Elmverse.Repository do
   alias Sqlitex.Server, as: Db
   alias Elmverse.Package
 
-  @spec list() :: {:ok, [Repository.t()]} | [{:error, atom()}]
-  def list() do
+  @spec list(atom() | pid()) :: {:ok, [Repository.t()]} | [{:error, atom()}]
+  def list(db \\ :elmverse) do
     query = "SELECT * FROM repository ORDER BY elm_ver DESC"
 
-    with {:ok, results} <- Db.query(:elmverse, query) do
+    with {:ok, results} <- Db.query(db, query) do
       {:ok,
        results
        |> Enum.map(&to_repository/1)}
@@ -67,12 +67,13 @@ defmodule Elmverse.Repository do
     }
   end
 
-  @spec update_timestamp(Repository.t()) :: {:ok, Repository.t()} | [{:error, atom()}]
-  def update_timestamp(%Repository{} = repo) do
+  @spec update_timestamp(Repository.t(), atom() | pid()) ::
+          {:ok, Repository.t()} | [{:error, atom()}]
+  def update_timestamp(%Repository{} = repo, db \\ :elmverse) do
     query = "UPDATE repository SET last_update = $1 WHERE repo_id = $2"
     ts = DateTime.utc_now() |> DateTime.to_iso8601()
 
-    with {:ok, _} <- Db.query(:elmverse, query, bind: [ts, repo.repo_id]) do
+    with {:ok, _} <- Db.query(db, query, bind: [ts, repo.repo_id]) do
       {:ok, %{repo | :last_update => ts}}
     end
   end
