@@ -23,6 +23,34 @@ defmodule Elmverse.Package do
   alias Sqlitex.Server, as: Db
   alias Elmverse.Release
 
+  defimpl Collectable, for: Elmverse.Package do
+    def into(original) do
+      collector_fn = fn s, cmd ->
+        case cmd do
+          {:cont, {key, value}} ->
+            Map.put(s, key, value)
+
+          :done ->
+            s
+
+          :halt ->
+            :ok
+        end
+      end
+
+      {original, collector_fn}
+    end
+  end
+
+  @spec list(atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
+  def list(db \\ :elmverse) do
+    query = "SELECT * FROM package ORDER BY repo_id, pub_name"
+
+    with {:ok, results} <- Db.query(db, query, into: %Package{}) do
+      {:ok, results}
+    end
+  end
+
   @spec fetch_releases(Package.t(), String.t()) ::
           {:ok, [Release.t()]}
           | {:error, HTTPoison.Error.t()}
