@@ -22,6 +22,25 @@ defmodule Elmverse.Release do
   alias Elmverse.Release.Doc
   alias Elmverse.Release.Readme
 
+  defimpl Collectable, for: Elmverse.Release do
+    def into(original) do
+      collector_fn = fn s, cmd ->
+        case cmd do
+          {:cont, {key, value}} ->
+            Map.put(s, key, value)
+
+          :done ->
+            s
+
+          :halt ->
+            :ok
+        end
+      end
+
+      {original, collector_fn}
+    end
+  end
+
   @spec fetch_docs(Release.t(), String.t()) ::
           {:ok, [Doc.t()]}
           | {:error, HTTPoison.Error.t()}

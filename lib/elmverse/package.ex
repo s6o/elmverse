@@ -74,6 +74,15 @@ defmodule Elmverse.Package do
     end
   end
 
+  @spec releases(Package.t(), atom() | pid()) :: {:ok, [Release.t()]} | {:error, any()}
+  def releases(%Package{} = p, db \\ :elmverse) do
+    query = "SELECT * FROM package_release WHERE pkg_id = $1 ORDER BY released"
+
+    with {:ok, results} <- Db.query(db, query, into: %Release{}, bind: [p.pkg_id]) do
+      {:ok, results}
+    end
+  end
+
   @spec save(Package.t(), atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
   def save(%Package{} = pkg, db \\ :elmverse) do
     query = """
