@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS package (
 ,   pkg_name TEXT
 ,   license TEXT
 ,   summary TEXT
+,   latest_version TEXT
 ,   UNIQUE(repo_id, pub_name)
 );
 

@@ -66,9 +66,17 @@ defmodule Elmverse.Repository do
     end
   end
 
-  defp to_package!(%{"name" => pub_name, "summary" => summary} = item, repo_id) do
+  defp to_package!(
+         %{"name" => pub_name, "summary" => summary, "versions" => versions} = item,
+         repo_id
+       ) do
     [publisher | [pkg_name | _]] = String.split(pub_name, "/")
     license = Map.get(item, "license", nil)
+
+    latest_version =
+      versions
+      |> Enum.sort(&(&1 >= &2))
+      |> (fn [lv | _] -> lv end).()
 
     %Package{
       repo_id: repo_id,
@@ -76,7 +84,8 @@ defmodule Elmverse.Repository do
       publisher: publisher,
       pkg_name: pkg_name,
       license: license,
-      summary: summary
+      summary: summary,
+      latest_version: latest_version
     }
   end
 

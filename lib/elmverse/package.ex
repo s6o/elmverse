@@ -6,7 +6,8 @@ defmodule Elmverse.Package do
           publisher: String.t(),
           pkg_name: String.t(),
           license: String.t(),
-          summary: String.t()
+          summary: String.t(),
+          latest_version: String.t()
         }
 
   defstruct [
@@ -16,7 +17,8 @@ defmodule Elmverse.Package do
     :publisher,
     :pkg_name,
     :license,
-    :summary
+    :summary,
+    :latest_version
   ]
 
   alias __MODULE__
@@ -62,6 +64,7 @@ defmodule Elmverse.Package do
          {:ok, rel_list} <- Jason.decode(body) do
       {:ok,
        rel_list
+       |> Enum.filter(fn {ver, _} -> ver == pkg.latest_version end)
        |> Enum.map(fn {ver, epoch} ->
          %Release{
            repo_id: pkg.repo_id,
@@ -85,25 +88,42 @@ defmodule Elmverse.Package do
 
   @spec save(Package.t(), atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
   def save(%Package{} = pkg, db \\ :elmverse) do
-    query = """
-      INSERT INTO package (repo_id, pub_name, publisher, pkg_name, license, summary)
-        VALUES ($1, $2, $3, $4, $5, $6)
+    exists = "SELECT pkg_id FROM package WHERE repo_id = $1 AND pub_name = $2"
+
+    insert = """
+      INSERT INTO package (repo_id, pub_name, publisher, pkg_name, license, summary, latest_version)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
     """
 
-    with {:ok, _} <-
-           Db.query(db, query,
-             bind: [
-               pkg.repo_id,
-               pkg.pub_name,
-               pkg.publisher,
-               pkg.pkg_name,
-               pkg.license,
-               pkg.summary
-             ]
-           ),
-         {:ok, [%{:pkg_id => pkg_id}]} <-
-           Db.query(db, "SELECT last_insert_rowid() as pkg_id", into: %{}) do
+    update =
+      "UPDATE package SET license = $1, summary = $2, latest_version = $3 WHERE pkg_id = $4"
+
+    with {:ok, [%{pkg_id: pkg_id}]} <-
+           Db.query(db, exists, bind: [pkg.repo_id, pkg.pub_name], into: %{}),
+         {:ok, _} <-
+           Db.query(db, update, bind: [pkg.license, pkg.summary, pkg.latest_version, pkg_id]) do
       {:ok, Map.put(pkg, :pkg_id, pkg_id)}
+    else
+      {:ok, []} ->
+        with {:ok, _} <-
+               Db.query(db, insert,
+                 bind: [
+                   pkg.repo_id,
+                   pkg.pub_name,
+                   pkg.publisher,
+                   pkg.pkg_name,
+                   pkg.license,
+                   pkg.summary,
+                   pkg.latest_version
+                 ]
+               ),
+             {:ok, [%{:pkg_id => pkg_id}]} <-
+               Db.query(db, "SELECT last_insert_rowid() as pkg_id", into: %{}) do
+          {:ok, Map.put(pkg, :pkg_id, pkg_id)}
+        end
+
+      {:error, _} = error ->
+        error
     end
   end
 end
