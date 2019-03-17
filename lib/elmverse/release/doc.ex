@@ -26,4 +26,34 @@ defmodule Elmverse.Release.Doc do
     :item_assoc,
     :item_prec
   ]
+
+  alias __MODULE__
+  alias Sqlitex.Server, as: Db
+
+  @spec save(Doc.t(), atom() | pid()) :: {:ok, Readme.t()} | [{:error, atom()}]
+  def save(%Doc{} = d, db \\ :elmverse) do
+    query = """
+      INSERT INTO release_doc (repo_id, rel_id, pub_name, pkg_ver,
+      item_path, item_name, item_comment, item_type, item_assoc, item_prec)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    """
+
+    with {:ok, _} <-
+           Db.query(db, query,
+             bind: [
+               d.repo_id,
+               d.rel_id,
+               d.pub_name,
+               d.pkg_ver,
+               d.item_path,
+               d.item_name,
+               d.item_comment,
+               d.item_type,
+               d.item_assoc,
+               d.item_prec
+             ]
+           ) do
+      {:ok, d}
+    end
+  end
 end
