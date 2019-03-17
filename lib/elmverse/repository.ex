@@ -38,7 +38,7 @@ defmodule Elmverse.Repository do
     end
   end
 
-  @spec list(atom() | pid()) :: {:ok, [Repository.t()]} | [{:error, atom()}]
+  @spec list(atom() | pid()) :: {:ok, [Repository.t()]} | {:error, any()}
   def list(db \\ :elmverse) do
     query = "SELECT * FROM repository ORDER BY elm_ver DESC"
 
