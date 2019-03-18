@@ -63,6 +63,12 @@ defmodule Elmverse.Repository do
         e ->
           {:error, Kernel.inspect(e)}
       end
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
     end
   end
 

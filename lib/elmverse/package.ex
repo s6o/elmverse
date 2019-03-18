@@ -57,6 +57,7 @@ defmodule Elmverse.Package do
           {:ok, [Release.t()]}
           | {:error, HTTPoison.Error.t()}
           | {:error, Jason.DecodeError.t()}
+          | {:error, String.t()}
   def fetch_releases(%Package{} = pkg, meta_url) do
     req_url = meta_url <> "/" <> pkg.pub_name <> "/releases.json"
 
@@ -74,6 +75,12 @@ defmodule Elmverse.Package do
            released: epoch
          }
        end)}
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
     end
   end
 

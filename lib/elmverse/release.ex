@@ -45,12 +45,19 @@ defmodule Elmverse.Release do
           {:ok, [Doc.t()]}
           | {:error, HTTPoison.Error.t()}
           | {:error, Jason.DecodeError.t()}
+          | {:error, String.t()}
   def fetch_docs(%Release{} = r, meta_url) do
     req_url = meta_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/docs.json"
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(req_url),
          {:ok, json_docs} <- Jason.decode(body) do
       {:ok, json_docs |> Enum.map(fn item -> to_module_doc(r, item) end)}
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
     end
   end
 
@@ -233,6 +240,12 @@ defmodule Elmverse.Release do
          pkg_ver: r.pkg_ver,
          readme: readme
        }}
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
     end
   end
 
