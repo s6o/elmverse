@@ -226,8 +226,9 @@ defmodule Elmverse.Release do
   end
 
   @spec fetch_readme(Release.t(), String.t()) ::
-          {:ok, [Release.t()]}
+          {:ok, [Readme.t()]}
           | {:error, HTTPoison.Error.t()}
+          | {:error, String.t()}
   def fetch_readme(%Release{} = r, meta_url) do
     req_url = meta_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/README.md"
 
