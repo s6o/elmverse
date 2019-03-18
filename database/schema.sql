@@ -66,6 +66,6 @@ CREATE TABLE IF NOT EXISTS release_doc (
 ,   item_type TEXT
 ,   item_assoc TEXT
 ,   item_prec INTEGER
-,   PRIMARY KEY (repo_id, rel_id)
-,   UNIQUE(repo_id, pub_name, pkg_ver)
+,   PRIMARY KEY (repo_id, rel_id, item_path)
+,   UNIQUE(repo_id, pub_name, pkg_ver, item_path)
 );
