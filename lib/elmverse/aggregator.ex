@@ -2,6 +2,8 @@ defmodule Elmverse.Aggregator do
   alias Elmverse.Repository
   alias Elmverse.Package
   alias Elmverse.Release
+  alias Elmverse.Release.Readme
+  alias Elmverse.Release.Doc
   require Logger
 
   @tasksleep 500
@@ -88,6 +90,69 @@ defmodule Elmverse.Aggregator do
        end)
        |> Enum.reduce([], fn {:ok, rels}, acc -> [rels | acc] end)
        |> List.flatten()}
+    else
+      error ->
+        Logger.error("Failed to launch release update aggregator. | #{inspect(error)}")
+        error
+    end
+  end
+
+  @doc """
+  For a given of package release list fetch package release documentation.
+  """
+  @spec update_docs([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
+  def update_docs([%Release{} | _] = releases) do
+    with {:ok, repos} <- Repository.list() do
+      meta_map =
+        repos
+        |> Enum.map(fn r -> {r.repo_id, r.meta_url} end)
+        |> Map.new()
+
+      {:ok,
+       releases
+       |> Task.async_stream(fn rel ->
+         Process.sleep(@tasksleep)
+         meta_url = Map.get(meta_map, rel.repo_id)
+
+         with {:ok, readme} <- Release.fetch_readme(rel, meta_url),
+              {:ok, docs} <- Release.fetch_docs(rel, meta_url),
+              {:ok, _} <- Readme.save(readme),
+              {:ok, rel_count} <-
+                (fn ->
+                   docs
+                   |> Enum.reduce(0, fn d, index ->
+                     with {:ok, _} <- Doc.save(d) do
+                       index + 1
+                     else
+                       error ->
+                         Logger.error(
+                           "Failed to save release doc: #{inspect(d)} | #{inspect(error)}"
+                         )
+
+                         index
+                     end
+                   end)
+                   |> (fn count ->
+                         if count == Enum.count(docs) do
+                           {:ok, 1}
+                         else
+                           {:error, "Failed to save release doc | #{inspect(rel)}"}
+                         end
+                       end).()
+                 end).() do
+           {:ok, rel_count}
+         else
+           error ->
+             Logger.error(
+               "Failed to fetch readme and/or docs for: #{inspect(rel)} from #{meta_url} | #{
+                 inspect(error)
+               }"
+             )
+
+             error
+         end
+       end)
+       |> Enum.reduce(0, fn {:ok, c}, acc -> acc + c end)}
     else
       error ->
         Logger.error("Failed to launch release update aggregator. | #{inspect(error)}")
