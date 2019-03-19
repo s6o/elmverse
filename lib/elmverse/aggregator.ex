@@ -11,8 +11,8 @@ defmodule Elmverse.Aggregator do
   @doc """
   Fetch list of packages over repositories, return list of packages with a new release.
   """
-  @spec update_packages() :: {:ok, [] | [Package.t()]} | {:error, any()}
-  def update_packages() do
+  @spec add_packages() :: {:ok, [] | [Package.t()]} | {:error, any()}
+  def add_packages() do
     with {:ok, repos} <- Repository.list() do
       {:ok,
        repos
@@ -50,8 +50,8 @@ defmodule Elmverse.Aggregator do
   @doc """
   Add release entries for latest updated packages, return list of new package releases.
   """
-  @spec update_releases([Package.t()]) :: {:ok, [] | [Releases.t()]} | {:error, any()}
-  def update_releases([%Package{} | _] = packages) do
+  @spec add_releases([Package.t()]) :: {:ok, [] | [Releases.t()]} | {:error, any()}
+  def add_releases([%Package{} | _] = packages) do
     with {:ok, repos} <- Repository.list() do
       meta_map =
         repos
@@ -100,8 +100,8 @@ defmodule Elmverse.Aggregator do
   @doc """
   For a given of package release list fetch package release documentation.
   """
-  @spec update_docs([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
-  def update_docs([%Release{} | _] = releases) do
+  @spec add_docs([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
+  def add_docs([%Release{} | _] = releases) do
     with {:ok, repos} <- Repository.list() do
       meta_map =
         repos
