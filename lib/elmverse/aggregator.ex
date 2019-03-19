@@ -110,49 +110,54 @@ defmodule Elmverse.Aggregator do
 
       {:ok,
        releases
-       |> Task.async_stream(fn rel ->
-         Process.sleep(@tasksleep)
-         meta_url = Map.get(meta_map, rel.repo_id)
+       |> Task.async_stream(
+         fn rel ->
+           Process.sleep(@tasksleep)
+           meta_url = Map.get(meta_map, rel.repo_id)
 
-         with {:ok, readme} <- Release.fetch_readme(rel, meta_url),
-              {:ok, docs} <- Release.fetch_docs(rel, meta_url),
-              {:ok, _} <- Readme.save(readme),
-              {:ok, rel_count} <-
-                (fn ->
-                   docs
-                   |> Enum.reduce(0, fn d, index ->
-                     with {:ok, _} <- Doc.save(d) do
-                       index + 1
-                     else
-                       error ->
-                         Logger.error(
-                           "Failed to save release doc: #{inspect(d)} | #{inspect(error)}"
-                         )
+           with {:ok, readme} <- Release.fetch_readme(rel, meta_url),
+                {:ok, docs_map} <- Release.fetch_docs(rel, meta_url),
+                {:ok, _} <- Readme.save(readme),
+                {:ok, rel_count} <-
+                  (fn ->
+                     docs_map
+                     |> Enum.reduce(0, fn {_, d}, index ->
+                       with {:ok, _} <- Doc.save(d) do
+                         index + 1
+                       else
+                         error ->
+                           Logger.error(
+                             "Failed to save release doc: #{inspect(d)} | #{inspect(error)}"
+                           )
 
-                         index
-                     end
-                   end)
-                   |> (fn count ->
-                         if count == Enum.count(docs) do
-                           {:ok, 1}
-                         else
-                           {:error, "Failed to save release doc | #{inspect(rel)}"}
-                         end
-                       end).()
-                 end).() do
-           {:ok, rel_count}
-         else
-           error ->
-             Logger.error(
-               "Failed to fetch readme and/or docs for: #{inspect(rel)} from #{meta_url} | #{
-                 inspect(error)
-               }"
-             )
+                           index
+                       end
+                     end)
+                     |> (fn count ->
+                           if count == Enum.count(docs_map) do
+                             Logger.info("Processed #{inspect(rel)}")
+                             {:ok, 1}
+                           else
+                             {:error, "Failed to save release doc | #{inspect(rel)}"}
+                           end
+                         end).()
+                   end).() do
+             {:ok, rel_count}
+           else
+             error ->
+               Logger.error(
+                 "Failed to fetch readme and/or docs for: #{inspect(rel)} from #{meta_url} | #{
+                   inspect(error)
+                 }"
+               )
 
-             error
-         end
-       end)
-       |> Enum.reduce(0, fn {:ok, c}, acc -> acc + c end)}
+               error
+           end
+         end,
+         timeout: 10_000 + Enum.count(releases) * @tasksleep
+       )
+       |> Stream.filter(fn {res1, {res2, _}} -> res1 == :ok && res2 == :ok end)
+       |> Enum.reduce(0, fn {:ok, {_, c}}, acc -> acc + c end)}
     else
       error ->
         Logger.error("Failed to launch release update aggregator. | #{inspect(error)}")
