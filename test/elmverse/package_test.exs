@@ -23,8 +23,8 @@ defmodule Elmverse.PackageTest do
 
                     with {:ok, [rel | _releases]} <- Package.fetch_releases(pkg, r.meta_url) do
                       assert rel.pub_name == "elm/browser"
-                      assert rel.pkg_ver == "1.0.0"
-                      assert rel.released == 1_534_772_907
+                      assert rel.pkg_ver == "1.0.1"
+                      assert rel.released == 1_539_963_190
                       assert rel.repo_id == 2
                     else
                       error ->
