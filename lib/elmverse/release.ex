@@ -41,6 +41,15 @@ defmodule Elmverse.Release do
     end
   end
 
+  @spec list(atom() | pid()) :: {:ok, Release.t()} | {:error, any()}
+  def list(db \\ :elmverse) do
+    query = "SELECT * FROM package_release ORDER BY repo_id, pub_name"
+
+    with {:ok, results} <- Db.query(db, query, into: %Release{}) do
+      {:ok, results}
+    end
+  end
+
   @spec fetch_docs(Release.t(), String.t()) ::
           {:ok, [Doc.t()]}
           | {:error, HTTPoison.Error.t()}
@@ -51,7 +60,10 @@ defmodule Elmverse.Release do
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(req_url),
          {:ok, json_docs} <- Jason.decode(body) do
-      {:ok, json_docs |> Enum.map(fn item -> to_module_doc(r, item) end)}
+      {:ok,
+       json_docs
+       |> Enum.map(fn item -> to_module_doc(r, item) end)
+       |> Enum.reduce(%{}, fn m, acc -> Map.merge(acc, m) end)}
     else
       {:ok, %HTTPoison.Response{} = r} ->
         {:error, "Unexpected HTTP response | #{inspect(r)}"}
