@@ -9,6 +9,22 @@ defmodule Elmverse.Aggregator do
   @tasksleep 500
 
   @doc """
+  Main aggregator, combines the:
+    * add_packages/0
+    * add_releases/1
+    * add_docs/1
+  into a single function.
+  """
+  @spec run() :: {:ok, non_neg_integer()} | {:error, any()}
+  def run() do
+    with {:ok, packages} <- add_packages(),
+         {:ok, releases} <- add_releases(packages),
+         {:ok, doc_count} <- add_docs(releases) do
+      {:ok, doc_count}
+    end
+  end
+
+  @doc """
   Fetch list of packages over repositories, return list of packages with a new release.
   """
   @spec add_packages() :: {:ok, [] | [Package.t()]} | {:error, any()}
@@ -70,6 +86,7 @@ defmodule Elmverse.Aggregator do
            |> Enum.filter(fn r -> r.pkg_ver == pkg.latest_version end)
            |> Enum.reduce([], fn rel, acc ->
              with {:ok, saved_rel} <- Release.save(rel) do
+               Logger.info("New package release: #{inspect(saved_rel)}")
                [saved_rel | acc]
              else
                error ->
@@ -136,7 +153,7 @@ defmodule Elmverse.Aggregator do
                      end)
                      |> (fn count ->
                            if count == Enum.count(docs_map) do
-                             Logger.info("Processed #{inspect(rel)}")
+                             Logger.info("Processed docs for #{inspect(rel)}")
                              {:ok, 1}
                            else
                              {:error, "Failed to save release doc | #{inspect(rel)}"}
