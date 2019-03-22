@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS repository (
 ,   meta_url TEXT NOT NULL
 ,   elm_ver TEXT NOT NULL
 ,   core_pub TEXT NOT NULL
+,   dep_url TEXT NOT NULL
+,   dep_json TEXT NO NULL
 ,   last_update TEXT
 );
 
@@ -62,4 +64,14 @@ CREATE TABLE IF NOT EXISTS release_doc (
 ,   item_assoc TEXT
 ,   item_prec INTEGER
 ,   PRIMARY KEY(repo_id, pub_name, pkg_ver, item_path)
+);
+
+
+CREATE TABLE IF NOT EXISTS release_dep (
+    repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
+,   pub_name TEXT NOT NULL
+,   pkg_ver TEXT NOT NULL
+,   dep_pub TEXT NOT NULL
+,   dep_guard TEXT NOT NULL
+,   PRIMARY KEY (repo_id, pub_name, pkg_ver, dep_pub)
 );

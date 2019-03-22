@@ -3,6 +3,7 @@ defmodule Elmverse.Aggregator do
   alias Elmverse.Package
   alias Elmverse.Release
   alias Elmverse.Release.Readme
+  alias Elmverse.Release.Dep
   alias Elmverse.Release.Doc
   require Logger
 
@@ -13,13 +14,15 @@ defmodule Elmverse.Aggregator do
     * add_packages/0
     * add_releases/1
     * add_docs/1
+    * add_deps/1
   into a single function.
   """
   @spec run() :: {:ok, non_neg_integer()} | {:error, any()}
   def run() do
     with {:ok, packages} <- add_packages(),
          {:ok, releases} <- add_releases(packages),
-         {:ok, doc_count} <- add_docs(releases) do
+         {:ok, doc_count} <- add_docs(releases),
+         {:ok, _} <- add_deps(releases) do
       {:ok, doc_count}
     end
   end
@@ -116,7 +119,75 @@ defmodule Elmverse.Aggregator do
   end
 
   @doc """
-  For a given of package release list fetch package release documentation.
+  For a given package release fetch package dependencies.
+  """
+  @spec add_deps([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
+  def add_deps([%Release{} | _] = releases) do
+    with {:ok, repos} <- Repository.list() do
+      dep_map =
+        repos
+        |> Enum.map(fn r -> {r.repo_id, {r.dep_url, r.dep_json}} end)
+        |> Map.new()
+
+      {:ok,
+       releases
+       |> Task.async_stream(
+         fn rel ->
+           Process.sleep(@tasksleep)
+           {dep_url, dep_json} = Map.get(dep_map, rel.repo_id)
+
+           with {:ok, deps} <- Release.fetch_deps(rel, dep_url, dep_json),
+                {:ok, rel_count} <-
+                  (fn ->
+                     deps
+                     |> Enum.reduce(0, fn d, index ->
+                       with {:ok, _} <- Dep.save(d) do
+                         index + 1
+                       else
+                         error ->
+                           Logger.error(
+                             "Failed to save dependencies: #{inspect(d)} | #{inspect(error)}"
+                           )
+
+                           index
+                       end
+                     end)
+                     |> (fn count ->
+                           if count == Enum.count(deps) do
+                             Logger.info("Processed dependencies for #{inspect(rel)}")
+                             {:ok, 1}
+                           else
+                             {:error, "Failed to save dependencies | #{inspect(rel)}"}
+                           end
+                         end).()
+                   end).() do
+             {:ok, rel_count}
+           else
+             error ->
+               req_url = dep_url <> "/" <> rel.pub_name <> "/" <> rel.pkg_ver <> "/" <> dep_json
+
+               Logger.error(
+                 "Failed to fetch dependencies for: #{inspect(rel)} from #{req_url} | #{
+                   inspect(error)
+                 }"
+               )
+
+               error
+           end
+         end,
+         timeout: 10_000 + Enum.count(releases) * @tasksleep
+       )
+       |> Stream.filter(fn {res1, {res2, _}} -> res1 == :ok && res2 == :ok end)
+       |> Enum.reduce(0, fn {:ok, {_, c}}, acc -> acc + c end)}
+    else
+      error ->
+        Logger.error("Failed to launch release dependency aggregator. | #{inspect(error)}")
+        error
+    end
+  end
+
+  @doc """
+  For a given package release fetch package release documentation.
   """
   @spec add_docs([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
   def add_docs([%Release{} | _] = releases) do

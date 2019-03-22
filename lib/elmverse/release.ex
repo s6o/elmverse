@@ -15,6 +15,7 @@ defmodule Elmverse.Release do
 
   alias __MODULE__
   alias Sqlitex.Server, as: Db
+  alias Elmverse.Release.Dep
   alias Elmverse.Release.Doc
   alias Elmverse.Release.Readme
 
@@ -44,6 +45,39 @@ defmodule Elmverse.Release do
     with {:ok, results} <- Db.query(db, query, into: %Release{}) do
       {:ok, results}
     end
+  end
+
+  @spec fetch_deps(Release.t(), String.t(), String.t()) ::
+          {:ok, [Dep.t()]}
+          | {:error, HTTPoison.Error.t()}
+          | {:error, Jason.DecodeError.t()}
+          | {:error, String.t()}
+  def fetch_deps(%Release{} = r, dep_url, dep_json) do
+    req_url = dep_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/" <> dep_json
+
+    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.get(req_url),
+         {:ok, json_deps} <- Jason.decode(body) do
+      {:ok, to_release_dep(r, json_deps)}
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
+    end
+  end
+
+  defp to_release_dep(%Release{} = r, %{"dependencies" => deps}) do
+    deps
+    |> Enum.map(fn {dep_pub, dep_guard} ->
+      %Dep{
+        repo_id: r.repo_id,
+        pub_name: r.pub_name,
+        pkg_ver: r.pkg_ver,
+        dep_pub: dep_pub,
+        dep_guard: dep_guard
+      }
+    end)
   end
 
   @spec fetch_docs(Release.t(), String.t()) ::

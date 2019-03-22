@@ -42,7 +42,7 @@ defmodule Elmverse.Repository do
 
   @spec list(atom() | pid()) :: {:ok, [Repository.t()]} | {:error, any()}
   def list(db \\ :elmverse) do
-    query = "SELECT * FROM repository ORDER BY elm_ver DESC"
+    query = "SELECT * FROM repository ORDER BY elm_ver"
 
     with {:ok, results} <- Db.query(db, query, into: %Repository{}) do
       {:ok, results}
