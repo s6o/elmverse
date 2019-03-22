@@ -1,7 +1,6 @@
 defmodule Elmverse.Release.Readme do
   @type t :: %__MODULE__{
           repo_id: pos_integer(),
-          rel_id: pos_integer(),
           pub_name: String.t(),
           pkg_ver: String.t(),
           readme: String.t()
@@ -9,7 +8,6 @@ defmodule Elmverse.Release.Readme do
 
   defstruct [
     :repo_id,
-    :rel_id,
     :pub_name,
     :pkg_ver,
     :readme
@@ -21,15 +19,14 @@ defmodule Elmverse.Release.Readme do
   @spec save(Readme.t(), atom() | pid()) :: {:ok, Readme.t()} | [{:error, atom()}]
   def save(%Readme{} = r, db \\ :elmverse) do
     query = """
-      INSERT INTO release_readme (repo_id, rel_id, pub_name, pkg_ver, readme)
-        VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO release_readme (repo_id, pub_name, pkg_ver, readme)
+        VALUES ($1, $2, $3, $4)
     """
 
     with {:ok, _} <-
            Db.query(db, query,
              bind: [
                r.repo_id,
-               r.rel_id,
                r.pub_name,
                r.pkg_ver,
                r.readme

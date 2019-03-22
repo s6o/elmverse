@@ -1,6 +1,5 @@
 defmodule Elmverse.Package do
   @type t :: %__MODULE__{
-          pkg_id: pos_integer(),
           repo_id: pos_integer(),
           pub_name: String.t(),
           publisher: String.t(),
@@ -11,7 +10,6 @@ defmodule Elmverse.Package do
         }
 
   defstruct [
-    :pkg_id,
     :repo_id,
     :pub_name,
     :publisher,
@@ -44,7 +42,7 @@ defmodule Elmverse.Package do
     end
   end
 
-  @spec list(atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
+  @spec list(atom() | pid()) :: {:ok, [Package.t()]} | {:error, any()}
   def list(db \\ :elmverse) do
     query = "SELECT * FROM package ORDER BY repo_id, pub_name"
 
@@ -69,7 +67,6 @@ defmodule Elmverse.Package do
        |> Enum.map(fn {ver, epoch} ->
          %Release{
            repo_id: pkg.repo_id,
-           pkg_id: pkg.pkg_id,
            pub_name: pkg.pub_name,
            pkg_ver: ver,
            released: epoch
@@ -84,34 +81,32 @@ defmodule Elmverse.Package do
     end
   end
 
-  @spec releases(Package.t(), atom() | pid()) :: {:ok, [Release.t()]} | {:error, any()}
-  def releases(%Package{} = p, db \\ :elmverse) do
-    query = "SELECT * FROM package_release WHERE pkg_id = $1 ORDER BY released"
-
-    with {:ok, results} <- Db.query(db, query, into: %Release{}, bind: [p.pkg_id]) do
-      {:ok, results}
-    end
-  end
-
   @spec save(Package.t(), atom() | pid()) :: {:ok, Package.t()} | {:error, any()}
   def save(%Package{} = pkg, db \\ :elmverse) do
-    exists = "SELECT pkg_id FROM package WHERE repo_id = $1 AND pub_name = $2"
+    exists = "SELECT * FROM package WHERE repo_id = $1 AND pub_name = $2"
 
     insert = """
       INSERT INTO package (repo_id, pub_name, publisher, pkg_name, license, summary, latest_version)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
     """
 
-    update =
-      "UPDATE package SET license = $1, summary = $2, latest_version = $3 WHERE pkg_id = $4"
+    update = """
+      UPDATE package
+      SET license = $1,
+          summary = $2,
+          latest_version = $3
+      WHERE repo_id = $4 AND pub_name = $5
+    """
 
-    with {:ok, [%{pkg_id: pkg_id}]} <-
-           Db.query(db, exists, bind: [pkg.repo_id, pkg.pub_name], into: %{}),
+    with {:ok, [%Package{}]} <-
+           Db.query(db, exists, bind: [pkg.repo_id, pkg.pub_name], into: %Package{}),
          {:ok, _} <-
-           Db.query(db, update, bind: [pkg.license, pkg.summary, pkg.latest_version, pkg_id]) do
-      {:ok, Map.put(pkg, :pkg_id, pkg_id)}
+           Db.query(db, update,
+             bind: [pkg.license, pkg.summary, pkg.latest_version, pkg.repo_id, pkg.pub_name]
+           ) do
+      {:ok, pkg}
     else
-      {:ok, []} ->
+      {:ok, _} ->
         with {:ok, _} <-
                Db.query(db, insert,
                  bind: [
@@ -123,10 +118,8 @@ defmodule Elmverse.Package do
                    pkg.summary,
                    pkg.latest_version
                  ]
-               ),
-             {:ok, [%{:pkg_id => pkg_id}]} <-
-               Db.query(db, "SELECT last_insert_rowid() as pkg_id", into: %{}) do
-          {:ok, Map.put(pkg, :pkg_id, pkg_id)}
+               ) do
+          {:ok, pkg}
         end
 
       {:error, _} = error ->

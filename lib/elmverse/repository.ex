@@ -4,6 +4,7 @@ defmodule Elmverse.Repository do
           repo_url: String.t(),
           meta_url: String.t(),
           elm_ver: String.t(),
+          core_pub: String.t(),
           last_update: DateTime.t() | nil
         }
 
@@ -12,6 +13,7 @@ defmodule Elmverse.Repository do
     :repo_url,
     :meta_url,
     :elm_ver,
+    :core_pub,
     :last_update
   ]
 

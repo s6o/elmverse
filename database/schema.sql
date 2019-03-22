@@ -5,42 +5,38 @@ CREATE TABLE IF NOT EXISTS repository (
 ,   repo_url TEXT NOT NULL
 ,   meta_url TEXT NOT NULL
 ,   elm_ver TEXT NOT NULL
+,   core_pub TEXT NOT NULL
 ,   last_update TEXT
 );
 
 
 CREATE TABLE IF NOT EXISTS package (
-    pkg_id INTEGER PRIMARY KEY
-,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
+    repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   pub_name TEXT NOT NULL
 ,   publisher TEXT
 ,   pkg_name TEXT
 ,   license TEXT
 ,   summary TEXT
 ,   latest_version TEXT
-,   UNIQUE(repo_id, pub_name)
+,   PRIMARY KEY(repo_id, pub_name)
 );
 
 
 CREATE TABLE IF NOT EXISTS package_release (
-    rel_id INTEGER PRIMARY KEY
-,   repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
-,   pkg_id INTEGER NOT NULL REFERENCES pakcage(pkg_id) ON DELETE CASCADE ON UPDATE CASCADE
+    repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   pub_name TEXT NOT NULL
 ,   pkg_ver TEXT NOT NULL
 ,   released INTEGER
-,   UNIQUE(repo_id, pub_name, pkg_ver)
+,   PRIMARY KEY(repo_id, pub_name, pkg_ver)
 );
 
 
 CREATE TABLE IF NOT EXISTS release_readme (
     repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
-,   rel_id INTEGER NOT NULL REFERENCES package_release(rel_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   pub_name TEXT NOT NULL
 ,   pkg_ver TEXT NOT NULL
 ,   readme TEXT
-,   PRIMARY KEY (repo_id, rel_id)
-,   UNIQUE(repo_id, pub_name, pkg_ver)
+,   PRIMARY KEY(repo_id, pub_name, pkg_ver)
 );
 
 -- Item Paths
@@ -56,7 +52,6 @@ CREATE TABLE IF NOT EXISTS release_readme (
 
 CREATE TABLE IF NOT EXISTS release_doc (
     repo_id INTEGER NOT NULL REFERENCES package_repository(repo_id) ON DELETE CASCADE ON UPDATE CASCADE
-,   rel_id INTEGER NOT NULL REFERENCES package_release(rel_id) ON DELETE CASCADE ON UPDATE CASCADE
 ,   pub_name TEXT NOT NULL
 ,   pkg_ver TEXT NOT NULL
 ,   item_path TEXT NOT NULL
@@ -66,6 +61,5 @@ CREATE TABLE IF NOT EXISTS release_doc (
 ,   item_type TEXT
 ,   item_assoc TEXT
 ,   item_prec INTEGER
-,   PRIMARY KEY (repo_id, rel_id, item_path)
-,   UNIQUE(repo_id, pub_name, pkg_ver, item_path)
+,   PRIMARY KEY(repo_id, pub_name, pkg_ver, item_path)
 );

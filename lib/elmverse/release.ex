@@ -1,17 +1,13 @@
 defmodule Elmverse.Release do
   @type t :: %__MODULE__{
-          rel_id: pos_integer(),
           repo_id: pos_integer(),
-          pkg_id: pos_integer(),
           pub_name: String.t(),
           pkg_ver: String.t(),
           released: pos_integer()
         }
 
   defstruct [
-    :rel_id,
     :repo_id,
-    :pkg_id,
     :pub_name,
     :pkg_ver,
     :released
@@ -41,7 +37,7 @@ defmodule Elmverse.Release do
     end
   end
 
-  @spec list(atom() | pid()) :: {:ok, Release.t()} | {:error, any()}
+  @spec list(atom() | pid()) :: {:ok, [Release.t()]} | {:error, any()}
   def list(db \\ :elmverse) do
     query = "SELECT * FROM package_release ORDER BY repo_id, pub_name"
 
@@ -87,10 +83,10 @@ defmodule Elmverse.Release do
     %{
       "/#{module_name}" => %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: "/#{module_name}",
+        item_index: 0,
         item_name: module_name,
         item_comment: module_comment
       }
@@ -111,10 +107,10 @@ defmodule Elmverse.Release do
 
       doc = %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: key,
+        item_index: 0,
         item_name: name,
         item_comment: c,
         item_type: t
@@ -139,10 +135,10 @@ defmodule Elmverse.Release do
 
       doc = %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: key,
+        item_index: 0,
         item_name: name,
         item_comment: c,
         item_type: t,
@@ -170,10 +166,10 @@ defmodule Elmverse.Release do
 
           d = %Doc{
             repo_id: r.repo_id,
-            rel_id: r.rel_id,
             pub_name: r.pub_name,
             pkg_ver: r.pkg_ver,
             item_path: k,
+            item_index: 0,
             item_name: cs
           }
 
@@ -185,10 +181,10 @@ defmodule Elmverse.Release do
 
       doc = %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: key,
+        item_index: 0,
         item_name: name,
         item_comment: c
       }
@@ -206,10 +202,10 @@ defmodule Elmverse.Release do
 
       doc = %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: key,
+        item_index: 0,
         item_name: name,
         item_comment: c,
         item_type: t
@@ -226,10 +222,10 @@ defmodule Elmverse.Release do
 
       d = %Doc{
         repo_id: r.repo_id,
-        rel_id: r.rel_id,
         pub_name: r.pub_name,
         pkg_ver: r.pkg_ver,
         item_path: k,
+        item_index: 0,
         item_name: arg
       }
 
@@ -248,7 +244,6 @@ defmodule Elmverse.Release do
       {:ok,
        %Readme{
          repo_id: r.repo_id,
-         rel_id: r.rel_id,
          pub_name: r.pub_name,
          pkg_ver: r.pkg_ver,
          readme: readme
@@ -265,23 +260,20 @@ defmodule Elmverse.Release do
   @spec save(Release.t(), atom() | pid()) :: {:ok, Release.t()} | [{:error, atom()}]
   def save(%Release{} = r, db \\ :elmverse) do
     query = """
-      INSERT INTO package_release (repo_id, pkg_id, pub_name, pkg_ver, released)
-        VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO package_release (repo_id, pub_name, pkg_ver, released)
+        VALUES ($1, $2, $3, $4)
     """
 
     with {:ok, _} <-
            Db.query(db, query,
              bind: [
                r.repo_id,
-               r.pkg_id,
                r.pub_name,
                r.pkg_ver,
                r.released
              ]
-           ),
-         {:ok, [%{:rel_id => rel_id}]} <-
-           Db.query(db, "SELECT last_insert_rowid() as rel_id", into: %{}) do
-      {:ok, Map.put(r, :rel_id, rel_id)}
+           ) do
+      {:ok, r}
     end
   end
 end

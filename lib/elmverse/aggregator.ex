@@ -22,11 +22,12 @@ defmodule Elmverse.Aggregator do
               {:ok, _} <- Repository.update_timestamp(r) do
            MapSet.difference(
              MapSet.new(repo_packages),
-             MapSet.new(stored_packages |> Enum.map(fn p -> %{p | pkg_id: nil} end))
+             MapSet.new(stored_packages)
            )
            |> MapSet.to_list()
            |> Enum.reduce([], fn pkg, acc ->
              with {:ok, saved_pkg} <- Package.save(pkg) do
+               Logger.info("New package: #{inspect(saved_pkg)}")
                [saved_pkg | acc]
              else
                error ->
