@@ -1,4 +1,4 @@
-defmodule ElmverseWeb.PageController do
+defmodule ElmverseWeb.IndexController do
   use ElmverseWeb, :controller
 
   def index(conn, _params) do

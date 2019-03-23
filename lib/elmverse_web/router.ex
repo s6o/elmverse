@@ -16,7 +16,7 @@ defmodule ElmverseWeb.Router do
   scope "/", ElmverseWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    get "/", IndexController, :index
   end
 
   # Other scopes may use custom stacks.
