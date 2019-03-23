@@ -11,8 +11,7 @@ defmodule Elmverse.Application do
       %{
         id: Sqlitex.Server,
         start: {Sqlitex.Server, :start_link, ["priv/elmverse.db", [name: :elmverse]]}
-      },
-      {Task.Supervisor, name: AggregatorTasks}
+      }
     ]
 
     opts = [strategy: :one_for_one, name: Elmverse.Supervisor]
