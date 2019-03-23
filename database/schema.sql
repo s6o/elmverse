@@ -75,3 +75,74 @@ CREATE TABLE IF NOT EXISTS release_dep (
 ,   dep_guard TEXT NOT NULL
 ,   PRIMARY KEY (repo_id, pub_name, pkg_ver, dep_pub)
 );
+
+
+-- Count only packages with valid releases for given repositories
+CREATE VIEW IF NOT EXISTS repository_summary_view (repo_id, elm_ver, core_pub, pkg_count, last_update) AS
+SELECT
+    r.repo_id
+,   r.elm_ver
+,   r.core_pub
+,   count(r.elm_ver) AS pkg_count
+,   r.last_update
+FROM (
+    SELECT
+        repo_id
+    ,   pub_name
+    FROM package_release
+    GROUP BY
+        repo_id
+    ,   pub_name
+    ,   pkg_ver
+    ,   released
+    ORDER BY
+        repo_id ASC
+    ,   pub_name ASC
+    ,   pkg_ver DESC
+    ,   released DESC
+) AS pr
+LEFT JOIN repository r ON pr.repo_id = r.repo_id
+LEFT JOIN package p ON pr.repo_id = p.repo_id AND pr.pub_name = p.pub_name
+GROUP BY
+    r.elm_ver
+ORDER BY
+    r.elm_ver
+;
+
+
+-- All repostiory packages, except repository core publisher packages e.g. elm-lang, elm
+-- Core publisher packages have special treatment as 'standard library'
+CREATE VIEW IF NOT EXISTS repository_package_summary_view
+(elm_ver, pub_name, publisher, pkg_name, pkg_ver, released, license, summary) AS
+SELECT
+    r.elm_ver
+,   p.pub_name
+,   p.publisher
+,   p.pkg_name
+,   pr.pkg_ver
+,   pr.released
+,   p.license
+,   p.summary
+FROM (
+    SELECT
+        repo_id
+    ,   pub_name
+    ,   pkg_ver
+    ,   released
+    FROM package_release
+    GROUP BY
+        repo_id
+    ,   pub_name
+    ,   pkg_ver
+    ,   released
+    ORDER BY
+        repo_id ASC
+    ,   pub_name ASC
+    ,   pkg_ver DESC
+    ,   released DESC
+) AS pr
+LEFT JOIN repository r ON pr.repo_id = r.repo_id
+LEFT JOIN package p ON pr.repo_id = p.repo_id AND pr.pub_name = p.pub_name
+WHERE
+    p.publisher NOT IN (SELECT core_pub FROM repository)
+;
