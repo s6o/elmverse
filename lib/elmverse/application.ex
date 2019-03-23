@@ -5,13 +5,13 @@ defmodule Elmverse.Application do
 
   def start(_type, _args) do
     children = [
-      # Start the endpoint when the application starts
-      ElmverseWeb.Endpoint,
       # SQLite Server
       %{
         id: Sqlitex.Server,
         start: {Sqlitex.Server, :start_link, ["priv/elmverse.db", [name: :elmverse]]}
-      }
+      },
+      # Start the endpoint when the application starts
+      ElmverseWeb.Endpoint
     ]
 
     opts = [strategy: :one_for_one, name: Elmverse.Supervisor]
