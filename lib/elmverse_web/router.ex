@@ -17,6 +17,9 @@ defmodule ElmverseWeb.Router do
     pipe_through :browser
 
     get "/", IndexController, :index
+
+    get "/repo/:elm_ver", RepositoryController, :index
+    get "/repo/:elm_ver/:pub/:pkg/:ver", RepositoryController, :show
   end
 
   # Other scopes may use custom stacks.
