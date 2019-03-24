@@ -8,13 +8,16 @@
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
   </head>
   <body>
-    <section class="section">
-      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
-      <div class="container">
-        <%= render @view_module, @view_template, assigns %>
+    <div>
+      <%= render @view_module, @view_template, assigns %>
+    </div>
+    <div class="footer">
+      <div class="has-text-centered">
+        <a href="https://github.com/s6o/elmverse" alt="Elmverse GitHub" target="_blank">
+          <img src=<%= Routes.static_path(@conn, "/images/GitHub-Mark-120px-plus.png") %> alt="Elmverse GitHub" />
+        </a>
       </div>
-    </section>
+    </div>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

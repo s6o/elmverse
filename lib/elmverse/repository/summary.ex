@@ -39,7 +39,7 @@ defmodule Elmverse.Repository.Summary do
 
   @spec list(atom() | pid()) :: {:ok, [Summary.t()]} | {:error, any()}
   def list(db \\ :elmverse) do
-    query = "SELECT * FROM repository_summary_view"
+    query = "SELECT * FROM repository_summary_view ORDER BY elm_ver DESC"
 
     with {:ok, results} <- Db.query(db, query, into: %Summary{}) do
       {:ok, results}
