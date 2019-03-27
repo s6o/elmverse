@@ -1,1 +1,36 @@
-<h1>Repository: <%= @elm_ver %></h1>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <img src=<%= Routes.static_path(@conn, "/images/mstile-70x70.png") %> alt="Elmverse" />
+    </div>
+</nav>
+<div class="columns">
+    <div class="column is-half">
+    </div>
+    <div class="column is-half">
+        <%= for pkg <- @repo_packages do %>
+            <div class="box">
+                <div class="media">
+                    <div class="media-left">
+                        <div class="content">
+                            <p>
+                                <strong><%= pkg.pub_name %></strong>
+                                <small>
+                                    <%= release_date(pkg.released) %>
+                                </small>
+                                <br>
+                                <%= pkg.summary %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="media-right">
+                        <figure class="image is-32x32">
+                            <strong>
+                                <%= pkg.pkg_ver %>
+                            </strong>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+        <% end %>
+    </div>
+</div>
