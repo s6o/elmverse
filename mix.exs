@@ -32,6 +32,7 @@ defmodule Elmverse.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:publicist, "1.1.0"},
       {:phoenix, "~> 1.4.1"},
       {:phoenix_pubsub, "~> 1.1"},
       {:phoenix_html, "~> 2.11"},
@@ -40,8 +41,7 @@ defmodule Elmverse.MixProject do
       {:jason, "~> 1.1"},
       {:plug_cowboy, "~> 2.0"},
       {:sqlitex, "~> 1.5"},
-      {:httpoison, "~> 1.5"},
-      {:exsync, "~> 0.2.3", only: :dev}
+      {:httpoison, "~> 1.5"}
     ]
   end
 end
