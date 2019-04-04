@@ -146,3 +146,34 @@ LEFT JOIN package p ON pr.repo_id = p.repo_id AND pr.pub_name = p.pub_name
 WHERE
     p.publisher NOT IN (SELECT core_pub FROM repository)
 ;
+
+
+-- Get core publisher packages with package modules, per repository
+CREATE VIEW IF NOT EXISTS elm_package_module_summary_view
+(elm_ver, core_pub, pkg_name, latest_version, modules) AS
+SELECT
+    pkg.elm_ver
+,   pkg.core_pub
+,   pkg.pkg_name
+,   pkg.latest_version
+,   group_concat(rdoc.item_name, ",") as modules
+FROM (
+    SELECT
+        p.repo_id
+    ,   r.elm_ver
+    ,   r.core_pub
+    ,   p.pub_name
+    ,   p.pkg_name
+    ,   p.latest_version
+    FROM (
+        SELECT
+            repo_id, elm_ver, core_pub
+        FROM repository
+        ORDER BY elm_ver
+    ) AS r
+    LEFT JOIN package p ON r.repo_id = p.repo_id AND r.core_pub = p.publisher
+) AS pkg
+LEFT JOIN release_doc rdoc ON pkg.repo_id = rdoc.repo_id AND pkg.pub_name = rdoc.pub_name AND pkg.latest_version = rdoc.pkg_ver
+WHERE rdoc.item_path = "/" || rdoc.item_name
+GROUP BY pkg.elm_ver, pkg.pkg_name, pkg.latest_version
+;
