@@ -1,4 +1,6 @@
 defmodule Elmverse.Release do
+  use Publicist
+
   @type t :: %__MODULE__{
           repo_id: pos_integer(),
           pub_name: String.t(),
@@ -67,19 +69,6 @@ defmodule Elmverse.Release do
     end
   end
 
-  defp to_release_dep(%Release{} = r, %{"dependencies" => deps}) do
-    deps
-    |> Enum.map(fn {dep_pub, dep_guard} ->
-      %Dep{
-        repo_id: r.repo_id,
-        pub_name: r.pub_name,
-        pkg_ver: r.pkg_ver,
-        dep_pub: dep_pub,
-        dep_guard: dep_guard
-      }
-    end)
-  end
-
   @spec fetch_docs(Release.t(), String.t()) ::
           {:ok, [Doc.t()]}
           | {:error, HTTPoison.Error.t()}
@@ -101,6 +90,63 @@ defmodule Elmverse.Release do
       error ->
         error
     end
+  end
+
+  @spec fetch_readme(Release.t(), String.t()) ::
+          {:ok, [Readme.t()]}
+          | {:error, HTTPoison.Error.t()}
+          | {:error, String.t()}
+  def fetch_readme(%Release{} = r, meta_url) do
+    req_url = meta_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/README.md"
+
+    with {:ok, %HTTPoison.Response{status_code: 200, body: readme}} <- HTTPoison.get(req_url) do
+      {:ok,
+       %Readme{
+         repo_id: r.repo_id,
+         pub_name: r.pub_name,
+         pkg_ver: r.pkg_ver,
+         readme: readme
+       }}
+    else
+      {:ok, %HTTPoison.Response{} = r} ->
+        {:error, "Unexpected HTTP response | #{inspect(r)}"}
+
+      error ->
+        error
+    end
+  end
+
+  @spec save(Release.t(), atom() | pid()) :: {:ok, Release.t()} | [{:error, atom()}]
+  def save(%Release{} = r, db \\ :elmverse) do
+    query = """
+      INSERT INTO package_release (repo_id, pub_name, pkg_ver, released)
+        VALUES ($1, $2, $3, $4)
+    """
+
+    with {:ok, _} <-
+           Db.query(db, query,
+             bind: [
+               r.repo_id,
+               r.pub_name,
+               r.pkg_ver,
+               r.released
+             ]
+           ) do
+      {:ok, r}
+    end
+  end
+
+  defp to_release_dep(%Release{} = r, %{"dependencies" => deps}) do
+    deps
+    |> Enum.map(fn {dep_pub, dep_guard} ->
+      %Dep{
+        repo_id: r.repo_id,
+        pub_name: r.pub_name,
+        pkg_ver: r.pkg_ver,
+        dep_pub: dep_pub,
+        dep_guard: dep_guard
+      }
+    end)
   end
 
   defp to_module_doc(
@@ -186,7 +232,12 @@ defmodule Elmverse.Release do
 
   defp to_module_union(doc_map, %Release{} = r, module_name, unions) do
     unions
-    |> Enum.reduce(doc_map, fn %{"name" => name, "comment" => c, "args" => args, "cases" => cases},
+    |> Enum.reduce(doc_map, fn %{
+                                 "name" => name,
+                                 "comment" => c,
+                                 "args" => args,
+                                 "cases" => cases
+                               },
                                acc ->
       arg_map = to_module_item_arg(acc, r, "/#{module_name}/unions/#{name}", args)
 
@@ -265,49 +316,5 @@ defmodule Elmverse.Release do
 
       Map.put(acc, k, d)
     end)
-  end
-
-  @spec fetch_readme(Release.t(), String.t()) ::
-          {:ok, [Readme.t()]}
-          | {:error, HTTPoison.Error.t()}
-          | {:error, String.t()}
-  def fetch_readme(%Release{} = r, meta_url) do
-    req_url = meta_url <> "/" <> r.pub_name <> "/" <> r.pkg_ver <> "/README.md"
-
-    with {:ok, %HTTPoison.Response{status_code: 200, body: readme}} <- HTTPoison.get(req_url) do
-      {:ok,
-       %Readme{
-         repo_id: r.repo_id,
-         pub_name: r.pub_name,
-         pkg_ver: r.pkg_ver,
-         readme: readme
-       }}
-    else
-      {:ok, %HTTPoison.Response{} = r} ->
-        {:error, "Unexpected HTTP response | #{inspect(r)}"}
-
-      error ->
-        error
-    end
-  end
-
-  @spec save(Release.t(), atom() | pid()) :: {:ok, Release.t()} | [{:error, atom()}]
-  def save(%Release{} = r, db \\ :elmverse) do
-    query = """
-      INSERT INTO package_release (repo_id, pub_name, pkg_ver, released)
-        VALUES ($1, $2, $3, $4)
-    """
-
-    with {:ok, _} <-
-           Db.query(db, query,
-             bind: [
-               r.repo_id,
-               r.pub_name,
-               r.pkg_ver,
-               r.released
-             ]
-           ) do
-      {:ok, r}
-    end
   end
 end
