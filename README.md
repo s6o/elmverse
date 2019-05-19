@@ -8,7 +8,6 @@ Elm package discovery, documentation and statistics.
 * Package discovery: latest new, updated, GitHub stars
 * Aggregate into an SQLite database, provide offline/local option
 
-
 ## Development
 
 To start your Phoenix server:
