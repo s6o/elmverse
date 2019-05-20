@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
@@ -8,16 +8,64 @@
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
   </head>
   <body>
-    <div>
-      <%= render @view_module, @view_template, assigns %>
-    </div>
-    <div class="footer">
-      <div class="has-text-centered">
-        <a href="https://github.com/s6o/elmverse" alt="Elmverse GitHub" target="_blank">
-          <img src=<%= Routes.static_path(@conn, "/images/GitHub-Mark-120px-plus.png") %> alt="Elmverse GitHub" />
-        </a>
-      </div>
-    </div>
+    <section class="container">
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="https://elmver.se">
+                    <img src=<%= Routes.static_path(@conn, "/images/mstile-70x70.png") %> alt="Elmverse" />
+                    Elmverse
+                </a>
+
+                <div class="navbar-item">
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" type="text" placeholder="Find a pacage">
+                        </p>
+                        <p class="control">
+                            <button class="button">Search</button>
+                        </p>
+                    </div>
+                </div>
+
+                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="main-navbar">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="main-navbar" class="navbar-menu">
+                <div class="navbar-start">
+                </div>
+            </div>
+
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <a class="navbar-item" href="https://guide.elm-lang.org/" target="_blank">Elm Guide</a>
+                    <a class="navbar-item" href="https://ellie-app.com" target="_blank">Ellie</a>
+                </div>
+            </div>
+        </nav>
+        
+        <div>
+            <div class="content has-text-centered">
+                <h2 class="title">The Elm package documentation universe.</h2>
+            </div>
+            <div>
+                <%= render @view_module, @view_template, assigns %>
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Elmverse</strong>
+            </p>
+            <a href="https://github.com/s6o/elmverse" alt="Elmverse GitHub" target="_blank">
+                <img src=<%= Routes.static_path(@conn, "/images/GitHub-Mark-120px-plus.png") %> alt="Elmverse GitHub" />
+            </a>
+        </div>
+    </footer>
     <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

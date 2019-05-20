@@ -1,41 +1,41 @@
+<%= for repo <- @repositories do %>
 <div class="columns">
-  <div class="column has-text-centered">
-    <section class="hero is-medium is-dark is-bold">
-      <div class="hero-body">
-        <h1 class="title is-spaced is-1">
-          <%= gettext "~ %{name} ~", name: "Elmverse" %>
-        </h1>
-        <h2 class="subtitle">Elm package discovery and documentation.<h2>
-      </div>
-    </section>
-    <div class="columns">
-      <%= for repo <- @repositories do %>
-        <div class="column">
-          <div style="margin-top: 10px"></div>
-          <div class="card">
+    <div class="column is-full">
+        <div style="margin-top: 10px"></div>
+        <div class="card">
             <a href="<%= Routes.repository_path(@conn, :index, repo.elm_ver) %>">
-              <header class="card-header">
-                <p class="card-header-title"><%= repo.elm_ver %></p>
-              </header>
-              <div class="card-content">
-                <table class="table is-fullwidth">
-                  <tbody>
-                    <tr>
-                      <td>Packages</td>
-                      <td><%= repo.pkg_count %></td>
-                    </tr>
-                    <tr>
-                      <td>Last Updated</td>
-                      <td><%= fmt_last_update(repo) %></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                <header class="card-header">
+                    <p class="card-header-title"><%= repo.elm_ver %></p>
+                </header>
+                <div class="card-content">
+                    <table class="table is-fullwidth">
+                        <tbody>
+                        <tr>
+                            <td>Packages</td>
+                            <td><%= repo.pkg_count %></td>
+                        </tr>
+                        <tr>
+                            <td>Last Updated</td>
+                            <td><%= fmt_last_update(repo) %></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </a>
-          </div>
         </div>
-      <% end %>
     </div>
-  </div>
 </div>
+<% end %>
+<div class="columns">
+    <div class="column">
+        <p class="is-info">MOST LOOKUPS</p>
+    </div>
 
+    <div class="column">
+        <p class="is-info">NEW PACKAGES</p>
+    </div>
+
+    <div class="column">
+        <p class="is-info">RECENTLY UPDATED</p>
+    </div>
+</div>
