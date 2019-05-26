@@ -71,6 +71,8 @@ defmodule Elmverse.Aggregator do
   Add release entries for latest updated packages, return list of new package releases.
   """
   @spec add_releases([Package.t()]) :: {:ok, [] | [Releases.t()]} | {:error, any()}
+  def add_releases([]), do: {:ok, []}
+
   def add_releases([%Package{} | _] = packages) do
     with {:ok, repos} <- Repository.list() do
       meta_map =
@@ -122,6 +124,8 @@ defmodule Elmverse.Aggregator do
   For a given package release fetch package dependencies.
   """
   @spec add_deps([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
+  def add_deps([]), do: {:ok, 0}
+
   def add_deps([%Release{} | _] = releases) do
     with {:ok, repos} <- Repository.list() do
       dep_map =
@@ -190,6 +194,8 @@ defmodule Elmverse.Aggregator do
   For a given package release fetch package release documentation.
   """
   @spec add_docs([Release.t()]) :: {:ok, non_neg_integer()} | {:error, any()}
+  def add_docs([]), do: {:ok, 0}
+
   def add_docs([%Release{} | _] = releases) do
     with {:ok, repos} <- Repository.list() do
       meta_map =
